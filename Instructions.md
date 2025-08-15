@@ -16,7 +16,7 @@
 ```
 
 ### Пример curl-запроса к микросервису
-
+e2ewewe
 ```bash
 curl -X 'POST' \
   'http://localhost:...' \
