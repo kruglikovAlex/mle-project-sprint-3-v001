@@ -172,7 +172,7 @@ class FastApiHandler:
                 # Получаем предсказания модели
                 y_pred = self.cost_estimate_predict(model_params)
                 print('y_pred ', y_pred[0])
-                if type(self.model) != mlflow.pyfunc.PyFuncModel:
+                if type(self.model) == mlflow.pyfunc.PyFuncModel:
                     y_pred = np.expm1(y_pred*4) 
                 else:
                     y_pred = np.expm1(y_pred) 

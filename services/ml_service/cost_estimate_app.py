@@ -1,7 +1,7 @@
 """FastAPI-приложение для модели оттока."""
 
 from fastapi import FastAPI, Body
-from fast_api_handler import FastApiHandler
+from ml_service.fast_api_handler import FastApiHandler
 from prometheus_fastapi_instrumentator import Instrumentator
 import numpy as np
 from prometheus_client import Histogram
@@ -32,7 +32,7 @@ main_app_predictions = Histogram(
     #описание метрики
     "Histogram of predictions",
     #указаываем корзины для гистограммы
-    buckets=(1, 2, 4, 5, 10)
+    buckets=(10000.000, 250000.000, 1000000.000, 500000000.000, 1000000000.000)
 )
 
 main_app_counter_pos = Counter("main_app_counter_pos", "Count of positive predictions")
@@ -53,7 +53,7 @@ def get_prediction_for_item(user_id: str, model_params: dict):
     Returns:
         dict: Предсказание, уйдёт ли пользователь из сервиса.
     """
-    required_response_params = ["user_id", "model_params"]
+    required_response_params = {'user_id', 'prediction'}
             
     all_params = {
         "user_id": user_id,
@@ -61,11 +61,12 @@ def get_prediction_for_item(user_id: str, model_params: dict):
     }
     
     response = app.handler.handle(all_params) 
-    print(f'response: {response}')
+    
+    main_app_counter_pos.inc()
     
     if set(response.keys()) == set(required_response_params):
-        return main_app_predictions.observe(response["prediction"])
-    else:
-        main_app_counter_pos.inc()
+        print('Переход в Prometheus all')
+        print('response["prediction"]', response["prediction"])
+        main_app_predictions.observe(response["prediction"])
         
     return response

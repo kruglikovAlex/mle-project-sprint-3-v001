@@ -17,4 +17,4 @@ scrape_configs:
     static_configs:
     - targets:
       # указывается адрес микросервиса
-      - fastapi_app:1702
+      - cost_estimate_app:1702 
