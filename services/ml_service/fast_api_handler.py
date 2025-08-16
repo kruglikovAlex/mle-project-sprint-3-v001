@@ -4,7 +4,8 @@ import mlflow
 from dotenv import load_dotenv
 import pandas as pd
 import numpy as np
-from catboost import CatBoostClassifier
+from catboost import CatBoostRegressor
+import joblib
 
 class FastApiHandler:
     """Класс FastApiHandler, который обрабатывает запрос и возвращает предсказание."""
@@ -34,6 +35,7 @@ class FastApiHandler:
             ]
         
         self.model_path = 'runs:/016a8bed9c27468c869d774ea10d768b/models' #"/models/catboost_churn_model.bin"
+
         self.load_cost_estimate(model_path=self.model_path)
 
     def load_cost_estimate(self, model_path: str):
@@ -53,11 +55,25 @@ class FastApiHandler:
             mlflow.set_tracking_uri('http://127.0.0.1:5000')
             mlflow.set_tracking_uri(f"http://{self.TRACKING_SERVER_HOST}:{self.TRACKING_SERVER_PORT}")
             mlflow.set_registry_uri(f"http://{self.TRACKING_SERVER_HOST}:{self.TRACKING_SERVER_PORT}")
-        
+            print('TRACKING_SERVER_HOST: ', self.TRACKING_SERVER_HOST)
+            print("os.getenv('AWS_ACCESS_KEY_ID'):", os.getenv('AWS_ACCESS_KEY_ID'))
+            
             # Load model as a PyFuncModel.
-            self.model = mlflow.pyfunc.load_model(model_path)
-            #self.model = CatBoostClassifier()
-            #self.model.load_model(model_path)
+            try:
+                self.model = mlflow.pyfunc.load_model(model_path)
+            except:
+                print('Failed to load model: API request to http://127.0.0.1:5000/api/2.0/mlflow/runs/get')
+                self.model = ""
+            if type(self.model) != mlflow.pyfunc.PyFuncModel:
+                print('Пробуем использовать заранее скачаную модель')
+                if os.path.exists('models/best_hparam_model_CBR.pkl'):
+                    with open('models/best_hparam_model_CBR.pkl', 'rb') as fd:
+                        self.model = joblib.load(fd)
+                        print('Модель:', type(self.model))
+                else:
+                    print('Модель не найдена')
+                    self.model = joblib.load('models/best_hparam_model_CBR.pkl')
+                    print('Модель:', type(self.model))
         except Exception as e:
             print(f"Failed to load model: {e}")
 
@@ -156,7 +172,10 @@ class FastApiHandler:
                 # Получаем предсказания модели
                 y_pred = self.cost_estimate_predict(model_params)
                 print('y_pred ', y_pred[0])
-                y_pred = np.expm1(y_pred*4) 
+                if type(self.model) != mlflow.pyfunc.PyFuncModel:
+                    y_pred = np.expm1(y_pred*4) 
+                else:
+                    y_pred = np.expm1(y_pred) 
                 response = {
                         "user_id": user_id, 
                         "prediction": y_pred[0]

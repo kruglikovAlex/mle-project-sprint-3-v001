@@ -7,8 +7,8 @@ WORKDIR mlflow_server
 
 RUN pip3 install -r requirements.txt
 
-#EXPOSE ${APP_MLFLOW_PORT}
+EXPOSE 5000
 
 #RUN set -ex && apk --no-cache add sudo
 #RUN chmod +x run_mlflow_registry.sh
-#RUN ./run_mlflow_registry.sh
+CMD ./run_mlflow_registry.sh

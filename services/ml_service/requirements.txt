@@ -1,6 +1,11 @@
+mlflow==2.7.1
 fastapi>=0.68.0,<0.69.0
 uvicorn>=0.15.0,<0.16.0
 pydantic==1.10.20
 catboost==1.2.7
 scikit-learn==1.6.0
 requests
+dotenv
+joblib
+prometheus-fastapi-instrumentator==7.0.0
+numpy
